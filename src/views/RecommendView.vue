@@ -1,5 +1,5 @@
 <template>
-  <div class="recommend-wrapper">
+  <div class="recommend-wrapper" v-loading:[`加载中...`].absoulte="loading">
     <ScrollWrapper class="recommend-content">
       <div name="recommend-view">
         <div class="slider-wrapper">
@@ -7,12 +7,12 @@
             <SliderShow v-if="sliderData.length" :sliderData="sliderData" />
           </div>
         </div>
-        <div class="recommend-list">
-          <h1 class="list-title">热门歌单推荐</h1>
+        <div v-if="albumsData.length" class="recommend-list">
+          <h1 class="list -title">热门歌单推荐</h1>
           <ul>
             <li v-for="item in albumsData" class="item" :key="item.id">
               <div class="icon">
-                <img width="60" height="60" :src="item.pic" />
+                <img width="60" height="60" v-lazy="item.pic" />
               </div>
               <div class="text">
                 <h2 class="name">
@@ -31,10 +31,12 @@
 </template>
 
 <script setup>
-import { watchEffect, ref } from 'vue';
+import { watchEffect, ref, computed } from 'vue';
 import { getRecommend } from '@/service/recommend';
 import SliderShow from '@/components/base/slider/SliderShow.vue';
 import ScrollWrapper from '@/components/base/scroll/ScrollWrapper.vue';
+const loading = computed(() => !sliderData.value.length && !albumsData.value.length);
+// 请求轮播图与推荐专辑数据
 const sliderData = ref([]),
   albumsData = ref([]);
 watchEffect(async () => {

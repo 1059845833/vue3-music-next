@@ -1,15 +1,17 @@
-body, html {
+body,
+html {
   line-height: 1;
-  font-family: 'PingFang SC', 'STHeitiSC-Light', 'Helvetica-Light', arial, sans-serif, 'Droid Sans Fallback';
+  font-family: 'PingFang SC', 'STHeitiSC-Light', 'Helvetica-Light', arial, sans-serif,
+    'Droid Sans Fallback';
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  // background: $color-background;
+  background: $color-background;
   color: $color-text;
 }
 
-// .g-relative {
-//   position: relative;
-// }
+.g-relative {
+  position: relative;
+}
 
 // .slide-enter-active, .slide-leave-active {
 //   transition: all 0.3s
