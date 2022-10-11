@@ -5,7 +5,6 @@ const RELATIVE_CLASS = 'g-relative';
 const loadingDirective = {
   mounted(el, binding) {
     const { modifiers, value, arg } = binding;
-    console.log(binding);
     const app = createApp(LoadingView, { ...modifiers, title: arg });
     const instance = app.mount(document.createElement('div'));
     el.$instance = instance;
@@ -15,7 +14,6 @@ const loadingDirective = {
     }
   },
   updated(el, binding) {
-    console.log(binding);
     const { value, oldValue } = binding;
     if (value !== oldValue) {
       value ? append(el) : remove(el);

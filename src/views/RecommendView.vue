@@ -8,7 +8,7 @@
           </div>
         </div>
         <div v-if="albumsData.length" class="recommend-list">
-          <h1 class="list -title">热门歌单推荐</h1>
+          <h1 class="list-title">热门歌单推荐</h1>
           <ul>
             <li v-for="item in albumsData" class="item" :key="item.id">
               <div class="icon">
@@ -31,11 +31,13 @@
 </template>
 
 <script setup>
-import { watchEffect, ref, computed } from 'vue';
+import { watchEffect, ref, computed, onMounted } from 'vue';
 import { getRecommend } from '@/service/recommend';
 import SliderShow from '@/components/base/slider/SliderShow.vue';
 import ScrollWrapper from '@/components/base/scroll/ScrollWrapper.vue';
+// 当滚动栏和推荐栏都没有数据的时候执行loading
 const loading = computed(() => !sliderData.value.length && !albumsData.value.length);
+
 // 请求轮播图与推荐专辑数据
 const sliderData = ref([]),
   albumsData = ref([]);

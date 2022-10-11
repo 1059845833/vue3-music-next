@@ -7,12 +7,26 @@
 <script setup>
 import { ref } from 'vue';
 import useScroll from './use-scroll';
+const props = defineProps({
+  click: {
+    type: Boolean,
+    default: false,
+  },
+  probeType: {
+    type: Number,
+    default: 0,
+  },
+});
+const emits = defineEmits({
+  scroll: null,
+});
+// 基础内容
 const wrapper = ref(null);
-const scroll = useScroll(wrapper);
+const scroll = useScroll(
+  wrapper,
+  {
+    ...props,
+  },
+  emits,
+);
 </script>
-
-<style lang="scss" scoped>
-// .scroll-wrapper {
-//   height: 100%;
-// }
-</style>
