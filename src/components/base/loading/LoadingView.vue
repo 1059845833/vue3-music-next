@@ -28,8 +28,8 @@ defineProps({
 .loading {
   display: flex;
   justify-content: center;
+  text-align: center;
   z-index: 20;
-  // 传入absolute则绝对定位
   &.absoulte {
     width: 100%;
     position: absolute;

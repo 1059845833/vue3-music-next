@@ -5,8 +5,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import useScroll from './use-scroll';
+import { ref } from 'vue';
 const props = defineProps({
   click: {
     type: Boolean,
@@ -29,4 +29,7 @@ const scroll = useScroll(
   },
   emits,
 );
+defineExpose({
+  scroll,
+});
 </script>

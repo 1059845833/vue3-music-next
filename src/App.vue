@@ -1,9 +1,7 @@
 <template>
   <header-bar></header-bar>
   <tab-link></tab-link>
-  <!-- <suspense> -->
   <router-view />
-  <!-- </suspense> -->
 </template>
 <script setup>
 import HeaderBar from '@/components/header/HeaderBar.vue';
