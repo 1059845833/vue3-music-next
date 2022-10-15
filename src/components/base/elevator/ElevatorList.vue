@@ -1,10 +1,15 @@
 <template>
-  <ScrollWrapper ref="scrollRef" class="elevator-list" @scroll="handleScroll" :probeType="3">
+  <ScrollWrapper
+    class="elevator-list"
+    ref="scrollRef"
+    v-bind="{ probeType: 3, click: true }"
+    @scroll="handleScroll"
+  >
     <ul ref="groupRef">
       <li class="group" v-for="{ title, list } in listData" :key="title">
         <h2 class="title">{{ title }}</h2>
         <ul>
-          <li v-for="item in list" :key="item.id" class="item">
+          <li @click="onSingerDetailClick(item)" v-for="item in list" :key="item.id" class="item">
             <img class="avatar" v-lazy="item.pic" />
             <span class="name">{{ item.name }}</span>
           </li>
@@ -13,9 +18,9 @@
     </ul>
     <div class="fixed">
       <div
+        class="fixed-title"
         v-show="currentFixedTitle"
         :style="`transform: translateY(${fixedStyle}px)`"
-        class="fixed-title"
       >
         {{ currentFixedTitle }}
       </div>
@@ -57,6 +62,7 @@
 import ScrollWrapper from '../scroll/ScrollWrapper.vue';
 import useShortcut from './use-shortcut';
 import useFixed from './use-fixed';
+const emit = defineEmits(['enter-singer-detail']);
 const props = defineProps({
   listData: {
     type: Array,
@@ -65,6 +71,7 @@ const props = defineProps({
 });
 const { groupRef, handleScroll, fixedStyle, currentIndex, currentFixedTitle } = useFixed(props);
 const {
+  shortcutRef,
   showTip,
   topValue,
   scrollRef,
@@ -73,6 +80,9 @@ const {
   handleTouchMove,
   handleTouchEnd,
 } = useShortcut(props, groupRef);
+function onSingerDetailClick(singerItem) {
+  emit('enter-singer-detail', singerItem);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -113,7 +123,6 @@ const {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 20;
     .fixed-title {
       height: 30px;
       line-height: 30px;
@@ -148,22 +157,19 @@ const {
       top: 20px;
       right: 30px;
       font-size: 1.2em;
-      // background-color: #aaa;
-
-      // transition: all 0.5s ease;
     }
     .fade-enter-active {
-      animation: fade 1s;
+      animation: fade 0.5s ease;
     }
     .fade-leave-active {
-      animation: fade 2s reverse;
+      animation: fade 1s ease reverse;
     }
     @keyframes fade {
       0% {
         opacity: 0;
       }
       100% {
-        opacity: 100%;
+        opacity: 1;
       }
     }
   }

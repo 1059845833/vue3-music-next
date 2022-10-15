@@ -3,6 +3,7 @@ import SearchViewVue from '@/views/SearchView.vue';
 import SingerViewVue from '@/views/SingerView.vue';
 import TopListViewVue from '@/views/TopListView.vue';
 import RecommendView from '@/views/RecommendView.vue';
+import SingerDetail from '@/views/SingerDetail.vue';
 const routes = [
   {
     path: '/',
@@ -25,6 +26,13 @@ const routes = [
     path: '/singer',
     name: 'singerView',
     component: SingerViewVue,
+    children: [
+      {
+        path: ':id',
+        name: 'singerDetail',
+        component: SingerDetail,
+      },
+    ],
   },
   {
     path: '/top-list',
