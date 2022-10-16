@@ -3,7 +3,6 @@
     <slot></slot>
   </div>
 </template>
-
 <script setup>
 import useScroll from './use-scroll';
 import { ref } from 'vue';

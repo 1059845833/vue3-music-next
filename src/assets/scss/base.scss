@@ -12,14 +12,22 @@ html {
 .g-relative {
   position: relative;
 }
-
-// .slide-enter-active, .slide-leave-active {
-//   transition: all 0.3s
-// }
-
-// .slide-enter-from, .slide-leave-to {
-//   transform: translate3d(100%, 0, 0)
-// }
+// 公共 slider 过渡样式
+.slider-enter-active {
+  animation: slider-in-out 0.3s ease;
+}
+.slider-leave-active {
+  animation: slider-in-out 0.3s ease reverse;
+}
+@keyframes slider-in-out {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
 
 // .list-enter-active, .list-leave-active {
 //   transition: all 0.3s;

@@ -1,25 +1,31 @@
 <template>
-  <div class="singer" v-loading:[`等待加载`].absoulte="!singerList.length">
+  <div class="singer" v-loading:[`正在载入...`].absoulte="!singerList.length">
     <ElevatorList @enter-singer-detail="handleEnterSingerDetail" :list-data="singerList" />
-    <router-view :singer="singerData"></router-view>
+    <router-view v-slot="{ Component }">
+      <transition appear name="slider">
+        <component :singer="singerData" :is="Component" />
+      </transition>
+    </router-view>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
 import { getSingerList } from '@/service/singer';
-import { watchEffect, ref } from 'vue';
+import { watchEffect, ref, toRaw } from 'vue';
 import ElevatorList from '@/components/base/elevator/ElevatorList.vue';
+import { BetterStorage } from '@/assets/js/storage';
+import { SINGER_KEY } from '@/assets/js/constant';
+
 const singerList = ref([]);
 watchEffect(async () => {
   const { singers } = await getSingerList();
   singerList.value = singers;
 });
-
-const singerData = ref({});
+const singerData = ref(null);
 const router = useRouter();
 function handleEnterSingerDetail(singer) {
-  console.log('进入父组件');
+  BetterStorage.session.set(SINGER_KEY, toRaw(singer));
   singerData.value = singer;
   router.push(`/singer/${singer.mid}`);
 }

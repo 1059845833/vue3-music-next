@@ -1,6 +1,6 @@
 <template>
   <ul class="song-list">
-    <li class="item" v-for="song in songs" :key="song.id">
+    <li class="item" v-for="(song, index) in songs" :key="song.id" @click="selectSong(song, index)">
       <div class="content">
         <h2 class="name">{{ song.name }}</h2>
         <p class="desc">{{ getDesc(song) }}</p>
@@ -9,14 +9,20 @@
   </ul>
 </template>
 <script setup>
+import { useStore } from 'vuex';
 const props = defineProps({
   songs: {
     type: Array,
     default: () => [],
   },
+  testSongs: {
+    type: Array,
+    default: () => [],
+  },
 });
+const emit = defineEmits(['selectSong']);
 
-// description
+// 歌曲description
 function getDesc(song) {
   return `${song.singer}·${song.album}`;
 }
@@ -27,6 +33,12 @@ function getRankCls(index) {
   } else {
     return 'text';
   }
+}
+// 选择歌曲
+const store = useStore();
+function selectSong(song, index) {
+  console.log(song);
+  emit('selectSong', { song, index });
 }
 </script>
 

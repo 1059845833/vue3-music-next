@@ -39,6 +39,7 @@ defineProps({
   }
   .loading-content {
     .title {
+      font-size: 12px;
       color: $color-text-ll;
     }
   }
