@@ -9,7 +9,6 @@
   </ul>
 </template>
 <script setup>
-import { useStore } from 'vuex';
 const props = defineProps({
   songs: {
     type: Array,
@@ -35,9 +34,7 @@ function getRankCls(index) {
   }
 }
 // 选择歌曲
-const store = useStore();
 function selectSong(song, index) {
-  console.log(song);
   emit('selectSong', { song, index });
 }
 </script>

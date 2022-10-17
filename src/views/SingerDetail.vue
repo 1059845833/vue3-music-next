@@ -6,8 +6,10 @@
 
 <script setup>
 import MusicList from '@/components/music-list/MusicList.vue';
+// 处理歌曲
 import { getSingerDetail } from '@/service/singer';
-import { ref, computed } from 'vue';
+import { processSongs } from '@/service/song';
+import { ref, computed, watchEffect } from 'vue';
 import { BetterStorage } from '@/assets/js/storage';
 import { SINGER_KEY } from '@/assets/js/constant';
 import { useRoute, useRouter } from 'vue-router';
@@ -36,17 +38,22 @@ const router = useRouter();
 // 获取歌曲数据;
 const songsList = ref([]);
 const loading = ref(true);
-async function initData() {
+
+watchEffect(async () => {
   // 如果singerData没有内容,直接退出
   if (!singerData.value) {
     router.replace(route.matched[0].path);
     return;
   }
-  const { songs } = await getSingerDetail(singerData.value);
+  let { songs } = await getSingerDetail(singerData.value);
+  const res = await processSongs(songs);
+  if (res.length) {
+    songs = res;
+  }
+  console.log(songs);
   songsList.value = songs;
   loading.value = false;
-}
-initData();
+});
 
 const picAndName = computed(() => {
   const singerDataValue = singerData.value;

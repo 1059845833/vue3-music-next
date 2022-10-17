@@ -9,31 +9,125 @@
         <h1 class="title">{{ currentSong.name }}</h1>
         <h2 class="subtitle">{{ currentSong.singer }}</h2>
       </div>
+      <!-- 下方按钮等控件 -->
+      <div class="bottom">
+        <div class="operators">
+          <div class="icon i-left">
+            <i @click="changeMode" :class="modeIcon"></i>
+          </div>
+          <div class="icon i-left" :class="disableCls">
+            <i @click="shiftSong(-1)" class="icon-prev"></i>
+          </div>
+          <div class="icon i-center" :class="disableCls">
+            <i @click="togglePlay" :class="playIcon"></i>
+          </div>
+          <div class="icon i-right" :class="disableCls">
+            <i @click="shiftSong(1)" class="icon-next"></i>
+          </div>
+          <div class="icon i-right">
+            <i class="icon-not-favorite"></i>
+            <!-- <i @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i> -->
+          </div>
+        </div>
+      </div>
     </div>
-    <audio ref="audioRef"></audio>
+    <audio ref="audioRef" @canplay="handleSongReady" @pause="onAudioPause"></audio>
   </div>
 </template>
 
 <script setup>
+import { PLAY_MODE } from '@/assets/js/constant';
+import useMode from './use-mode';
 import { useStore } from 'vuex';
 import { computed, watch, ref } from 'vue';
+import * as mutation from '@/assets/js/mutation-types';
+
+/* hooks */
+// 播放状态hooks
+const { modeIcon, changeMode } = useMode();
 
 // vuex
 const store = useStore();
-const fullScreen = computed(() => store.state.fullScreen);
-const currentSong = computed(() => store.getters.currentSong);
 const playing = computed(() => store.state.playing);
+const fullScreen = computed(() => store.state.fullScreen);
 const currentIndex = computed(() => store.state.currentIndex);
+// currentSong内部也是一个基于currentIndex的computed
+const currentSong = computed(() => store.getters.currentSong);
+const playList = computed(() => store.state.playList);
 const playMode = computed(() => store.state.playMode);
 
+/* 控制组件播放展示, 并控制其播放暂停  */
+// 歌曲audio-dom获取
 const audioRef = ref(null);
+// 歌曲是否canplay
+const songReady = ref(false);
+// 监听歌曲,切歌时放新歌
 watch(currentSong, newSong => {
+  // 每次切歌的时候都将songReady设为false
+  // 如果缓冲成功,会触发回调自己改为true
+  songReady.value = false;
   const audioEl = audioRef.value;
-  console.log(newSong);
-  //   audioEl.src = newSong.url;
-  //   audioEl.play();
+  if (newSong.url) {
+    audioEl.src = newSong.url;
+  } else {
+    audioEl.src = `/music/music-${Math.floor(Math.random() * 8) + 1}.mp4`;
+  }
+  audioEl.play();
 });
 
+// audio触发回调事件
+function error() {
+  songReady.value = true;
+}
+function handleSongReady(event) {
+  if (songReady.value) {
+    return;
+  }
+  songReady.value = true;
+}
+// 避免歌曲因为电脑原因暂停,导致playing数据混乱
+function onAudioPause() {
+  store.commit(mutation.SET_PLAYING_STATE, false);
+}
+// 播放状态
+const playIcon = computed(() => {
+  return playing.value ? 'icon-pause' : 'icon-play';
+});
+function togglePlay() {
+  if (!songReady.value) {
+    return;
+  }
+  store.commit(mutation.SET_PLAYING_STATE, !playing.value);
+  const audioEl = audioRef.value;
+  playing.value ? audioEl.play() : audioEl.pause();
+}
+
+// 切换歌曲,上一首,下一首,如果只有一首歌就循环播放
+function shiftSong(offset) {
+  if (!songReady.value) {
+    return;
+  }
+  // 如果只有一首歌
+  if (playList.value.length === 1 || playMode.value === PLAY_MODE.loop) {
+    const audioEl = audioRef.value;
+    audioEl.currentTime = 0;
+    return;
+  }
+  let index = currentIndex.value + offset;
+  if (index === playList.value.length) {
+    index = 0;
+  } else if (index < 0) {
+    index = playList.value.length - 1;
+  }
+  store.commit(mutation.SET_CURRENT_INDEX, index);
+  if (!playing.value) {
+    store.commit(mutation.SET_PLAYING_STATE, true);
+  }
+}
+
+const disableCls = computed(() => {
+  return songReady.value ? '' : 'disable';
+});
 // 隐藏normal-player
 function hideNormalPlayer() {
   store.commit('setFullScreen', false);
