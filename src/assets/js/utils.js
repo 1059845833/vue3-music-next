@@ -15,5 +15,14 @@ function shuffle(source) {
 function getRandomFromMax(max) {
   return Math.floor(Math.random() * (max + 1));
 }
-
-export { shuffle };
+function formatTime(interval) {
+  // 向下取整
+  // interval = interval | 0;
+  interval = Math.floor(interval);
+  // 分钟部分,前面要填充0
+  const minute = (((interval / 60) | 0) + '').padStart(2, '0');
+  // 秒钟部分,前面要填充0
+  const second = ((interval % 60) + '').padStart(2, '0');
+  return `${minute}:${second}`;
+}
+export { shuffle, formatTime };

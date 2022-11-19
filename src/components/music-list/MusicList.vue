@@ -135,7 +135,6 @@ const noResult = computed(() => {
 // selectSong 选择一首歌开始播放,并初始化歌曲列表
 function handleSelectSong({ song, index }) {
   // console.log('选择了', song);
-  console.log(index);
   store.dispatch('selectPlay', { list: props.songs, index });
 }
 // 随机播放

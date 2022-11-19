@@ -9,8 +9,36 @@
         <h1 class="title">{{ currentSong.name }}</h1>
         <h2 class="subtitle">{{ currentSong.singer }}</h2>
       </div>
+      <!-- 中间层 -->
+      <div class="middle">
+        <div class="middle-l">
+          <div ref="cdWrapperRef" class="cd-wrapper">
+            <div ref="cdRef" class="cd">
+              <img
+                ref="cdImageRef"
+                class="image playing"
+                :style="animation"
+                :src="currentSong.pic"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- 下方按钮等控件 -->
       <div class="bottom">
+        {{ animation }}
+        <div class="progress-wrapper">
+          <span class="time time-l">{{ formatTime(currentTime) }}</span>
+          <div class="progress-bar-wrapper">
+            <progress-bar
+              :progress="progress"
+              ref="barRef"
+              @progress-changing="handleProgressChanging"
+              @progress-changed="handleProgressChanged"
+            ></progress-bar>
+          </div>
+          <span class="time time-r">{{ formatTime(currentSong.duration) }}</span>
+        </div>
         <div class="operators">
           <div class="icon i-left">
             <i @click="changeMode" :class="modeIcon"></i>
@@ -31,11 +59,20 @@
         </div>
       </div>
     </div>
-    <audio ref="audioRef" @canplay="handleSongReady" @pause="onAudioPause"></audio>
+    <!-- canplay -->
+    <audio
+      ref="audioRef"
+      @canplay="handleSongReady"
+      @timeupdate="timeUpdate"
+      @pause="handleAudioPause"
+      @ended="handleAudioEnd"
+    ></audio>
   </div>
 </template>
 
 <script setup>
+import { formatTime } from '@/assets/js/utils';
+import ProgressBar from './ProgressBar.vue';
 import { PLAY_MODE } from '@/assets/js/constant';
 import useMode from './use-mode';
 import { useStore } from 'vuex';
@@ -46,15 +83,16 @@ import * as mutation from '@/assets/js/mutation-types';
 // 播放状态hooks
 const { modeIcon, changeMode } = useMode();
 
-// vuex
+// vuex 状态
 const store = useStore();
 const playing = computed(() => store.state.playing);
 const fullScreen = computed(() => store.state.fullScreen);
 const currentIndex = computed(() => store.state.currentIndex);
-// currentSong内部也是一个基于currentIndex的computed
+/* currentSong内部也是一个基于currentIndex的computed */
 const currentSong = computed(() => store.getters.currentSong);
 const playList = computed(() => store.state.playList);
 const playMode = computed(() => store.state.playMode);
+const currentTime = ref(0); // 当前播放时间
 
 /* 控制组件播放展示, 并控制其播放暂停  */
 // 歌曲audio-dom获取
@@ -62,34 +100,52 @@ const audioRef = ref(null);
 // 歌曲是否canplay
 const songReady = ref(false);
 // 监听歌曲,切歌时放新歌
-watch(currentSong, newSong => {
+watch(currentSong, (newSong, pre) => {
   // 每次切歌的时候都将songReady设为false
   // 如果缓冲成功,会触发回调自己改为true
   songReady.value = false;
   const audioEl = audioRef.value;
-  if (newSong.url) {
-    audioEl.src = newSong.url;
-  } else {
-    audioEl.src = `/music/music-${Math.floor(Math.random() * 8) + 1}.mp4`;
+  let src = newSong.url;
+  if (!src) {
+    src = `/music/music-${Math.floor(Math.random() * 8) + 1}.mp4`;
   }
-  audioEl.play();
+  setTimeout(() => {
+    audioEl.src = src;
+    audioEl.play();
+  }, 100);
+  store.commit(mutation.SET_PLAYING_STATE, true);
 });
 
-// audio触发回调事件
+watch(playing, cur => {
+  if (cur) {
+    audioRef.value.play();
+  } else {
+    audioRef.value.pause();
+  }
+});
+/* audio事件处理 */
 function error() {
   songReady.value = true;
 }
+// 歌曲可以播放了
 function handleSongReady(event) {
   if (songReady.value) {
     return;
   }
   songReady.value = true;
 }
+
 // 避免歌曲因为电脑原因暂停,导致playing数据混乱
-function onAudioPause() {
+function handleAudioPause() {
   store.commit(mutation.SET_PLAYING_STATE, false);
 }
-// 播放状态
+// 歌曲播放完毕跳下一首歌
+function handleAudioEnd(event) {
+  console.log('end', event);
+  shiftSong(1);
+}
+/* 播放状态 */
+// 播放按钮
 const playIcon = computed(() => {
   return playing.value ? 'icon-pause' : 'icon-play';
 });
@@ -98,33 +154,59 @@ function togglePlay() {
     return;
   }
   store.commit(mutation.SET_PLAYING_STATE, !playing.value);
-  const audioEl = audioRef.value;
-  playing.value ? audioEl.play() : audioEl.pause();
 }
-
+// 播放时候执行旋转动画
+const animation = computed(() => {
+  if (playing.value) {
+    return 'animation-play-state: running';
+  }
+  return 'animation-play-state: paused';
+});
 // 切换歌曲,上一首,下一首,如果只有一首歌就循环播放
 function shiftSong(offset) {
   if (!songReady.value) {
     return;
   }
-  // 如果只有一首歌
+  // 如果只有一首歌,或者是单曲循环
   if (playList.value.length === 1 || playMode.value === PLAY_MODE.loop) {
     const audioEl = audioRef.value;
     audioEl.currentTime = 0;
+    audioEl.play();
     return;
   }
+  // 获取下一首歌的下标是当前下标+1
   let index = currentIndex.value + offset;
+  // 如果到尾了从头开始
   if (index === playList.value.length) {
     index = 0;
   } else if (index < 0) {
+    // 到头了从尾开始
     index = playList.value.length - 1;
   }
   store.commit(mutation.SET_CURRENT_INDEX, index);
+  // 如果当前是暂停的,改为播放
+}
+
+let autoChanging = true;
+// currentTime修改
+function timeUpdate(event) {
+  autoChanging && (currentTime.value = event.target.currentTime);
+}
+// 进度条,是一个百分比值,
+const progress = computed(() => {
+  return currentTime.value / currentSong.value.duration;
+});
+function handleProgressChanging(progress) {
+  autoChanging = false;
+  currentTime.value = currentSong.value.duration * progress;
+}
+function handleProgressChanged(progress) {
+  autoChanging = true;
+  audioRef.value.currentTime = currentSong.value.duration * progress;
   if (!playing.value) {
     store.commit(mutation.SET_PLAYING_STATE, true);
   }
 }
-
 const disableCls = computed(() => {
   return songReady.value ? '' : 'disable';
 });

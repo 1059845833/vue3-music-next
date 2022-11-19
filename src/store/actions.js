@@ -36,7 +36,7 @@ const actions = {
       commit('setPlayList', state.sequenceList);
     }
     // 修改后将当前歌曲的下标找到
-    const index = state.playlist.findIndex(song => {
+    const index = state.playList.findIndex(song => {
       return song.id === currentId;
     });
 

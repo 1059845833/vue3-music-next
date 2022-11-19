@@ -47,6 +47,7 @@ watchEffect(async () => {
   }
   let { songs } = await getSingerDetail(singerData.value);
   const res = await processSongs(songs);
+  console.log(res);
   if (res.length) {
     songs = res;
   }
