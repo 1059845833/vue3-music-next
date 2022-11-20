@@ -1,65 +1,77 @@
 <template>
   <div class="player">
-    <div class="normal-player" v-show="fullScreen">
-      <div class="background">
-        <img :src="currentSong.pic" alt="" />
-      </div>
-      <div class="top">
-        <div class="back" @click="hideNormalPlayer"><i class="icon-back"></i></div>
-        <h1 class="title">{{ currentSong.name }}</h1>
-        <h2 class="subtitle">{{ currentSong.singer }}</h2>
-      </div>
-      <!-- 中间层 -->
-      <div class="middle">
-        <div class="middle-l">
-          <div ref="cdWrapperRef" class="cd-wrapper">
-            <div ref="cdRef" class="cd">
-              <img
-                ref="cdImageRef"
-                class="image playing"
-                :style="animation"
-                :src="currentSong.pic"
-              />
+    <transition
+      name="normal"
+      @enter="onEnter"
+      @after-enter="onAfterEnter"
+      @leave="onLeave"
+      @after-leave="onAfterLeave"
+    >
+      <div class="normal-player" v-show="fullScreen">
+        <div class="background">
+          <img :src="currentSong.pic" alt="" />
+        </div>
+        <div class="top">
+          <div class="back" @click="hideNormalPlayer"><i class="icon-back"></i></div>
+          <h1 class="title">{{ currentSong.name }}</h1>
+          <h2 class="subtitle">{{ currentSong.singer }}</h2>
+        </div>
+        <!-- 中间层 -->
+        <div class="middle">
+          <div class="middle-l">
+            <div ref="cdWrapperRef" class="cd-wrapper">
+              <div ref="cdRef" class="cd">
+                <img
+                  ref="cdImageRef"
+                  class="image playing"
+                  :style="animation"
+                  :src="currentSong.pic"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 下方按钮等控件 -->
+        <div class="bottom">
+          <div class="progress-wrapper">
+            <span class="time time-l">{{ formatTime(currentTime) }}</span>
+            <div class="progress-bar-wrapper">
+              <progress-bar
+                :progress="progress"
+                ref="barRef"
+                @progress-changing="handleProgressChanging"
+                @progress-changed="handleProgressChanged"
+              ></progress-bar>
+            </div>
+            <span class="time time-r">{{ formatTime(currentSong.duration) }}</span>
+          </div>
+          <div class="operators">
+            <div class="icon i-left">
+              <i @click="changeMode" :class="modeIcon"></i>
+            </div>
+            <div class="icon i-left" :class="disableCls">
+              <i @click="shiftSong(-1)" class="icon-prev"></i>
+            </div>
+            <div class="icon i-center" :class="disableCls">
+              <i @click="togglePlay" :class="playIcon"></i>
+            </div>
+            <div class="icon i-right" :class="disableCls">
+              <i @click="shiftSong(1)" class="icon-next"></i>
+            </div>
+            <div class="icon i-right volume">
+              <progress-bar
+                :progress="volumeProgress"
+                @progress-changing="handleVolumeChange"
+              ></progress-bar>
             </div>
           </div>
         </div>
       </div>
-      <!-- 下方按钮等控件 -->
-      <div class="bottom">
-        {{ animation }}
-        <div class="progress-wrapper">
-          <span class="time time-l">{{ formatTime(currentTime) }}</span>
-          <div class="progress-bar-wrapper">
-            <progress-bar
-              :progress="progress"
-              ref="barRef"
-              @progress-changing="handleProgressChanging"
-              @progress-changed="handleProgressChanged"
-            ></progress-bar>
-          </div>
-          <span class="time time-r">{{ formatTime(currentSong.duration) }}</span>
-        </div>
-        <div class="operators">
-          <div class="icon i-left">
-            <i @click="changeMode" :class="modeIcon"></i>
-          </div>
-          <div class="icon i-left" :class="disableCls">
-            <i @click="shiftSong(-1)" class="icon-prev"></i>
-          </div>
-          <div class="icon i-center" :class="disableCls">
-            <i @click="togglePlay" :class="playIcon"></i>
-          </div>
-          <div class="icon i-right" :class="disableCls">
-            <i @click="shiftSong(1)" class="icon-next"></i>
-          </div>
-          <div class="icon i-right">
-            <i class="icon-not-favorite"></i>
-            <!-- <i @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i> -->
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- canplay -->
+    </transition>
+    <!-- mini-player -->
+    <mini-player ref="miniRef" :progress="progress">
+      <i @click="togglePlay" :class="playIcon"></i>
+    </mini-player>
     <audio
       ref="audioRef"
       @canplay="handleSongReady"
@@ -71,18 +83,19 @@
 </template>
 
 <script setup>
-import { formatTime } from '@/assets/js/utils';
 import ProgressBar from './ProgressBar.vue';
+import MiniPlayer from './MiniPlayer.vue';
+import { formatTime } from '@/assets/js/utils';
 import { PLAY_MODE } from '@/assets/js/constant';
 import useMode from './use-mode';
+import useAnimation from './useAnimation';
 import { useStore } from 'vuex';
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, onMounted } from 'vue';
 import * as mutation from '@/assets/js/mutation-types';
-
 /* hooks */
 // 播放状态hooks
 const { modeIcon, changeMode } = useMode();
-
+const { onEnter, onAfterEnter, onLeave, onAfterLeave, cdWrapperRef } = useAnimation();
 // vuex 状态
 const store = useStore();
 const playing = computed(() => store.state.playing);
@@ -93,6 +106,8 @@ const currentSong = computed(() => store.getters.currentSong);
 const playList = computed(() => store.state.playList);
 const playMode = computed(() => store.state.playMode);
 const currentTime = ref(0); // 当前播放时间
+// 音量条
+const volumeProgress = ref(0.3);
 
 /* 控制组件播放展示, 并控制其播放暂停  */
 // 歌曲audio-dom获取
@@ -109,14 +124,17 @@ watch(currentSong, (newSong, pre) => {
   if (!src) {
     src = `/music/music-${Math.floor(Math.random() * 8) + 1}.mp4`;
   }
-  setTimeout(() => {
-    audioEl.src = src;
-    audioEl.play();
-  }, 100);
+  // newSong.pic = `/photo/${Math.floor(Math.random() * 4) + 1}.png`;
+  audioEl.src = src;
+  // volumeProgress.value = 1;
+  audioEl.volume = volumeProgress.value;
+  audioEl.play();
   store.commit(mutation.SET_PLAYING_STATE, true);
 });
-
 watch(playing, cur => {
+  if (!songReady.value) {
+    return;
+  }
   if (cur) {
     audioRef.value.play();
   } else {
@@ -141,7 +159,6 @@ function handleAudioPause() {
 }
 // 歌曲播放完毕跳下一首歌
 function handleAudioEnd(event) {
-  console.log('end', event);
   shiftSong(1);
 }
 /* 播放状态 */
@@ -207,6 +224,12 @@ function handleProgressChanged(progress) {
     store.commit(mutation.SET_PLAYING_STATE, true);
   }
 }
+
+// 音量控制
+function handleVolumeChange(value) {
+  volumeProgress.value = value;
+  audioRef.value.volume = value;
+}
 const disableCls = computed(() => {
   return songReady.value ? '' : 'disable';
 });
@@ -216,7 +239,7 @@ function hideNormalPlayer() {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .player {
   .normal-player {
     position: fixed;
@@ -287,6 +310,7 @@ function hideNormalPlayer() {
         width: 100%;
         height: 0;
         padding-top: 80%;
+
         .cd-wrapper {
           position: absolute;
           left: 10%;
@@ -425,6 +449,10 @@ function hideNormalPlayer() {
         .i-right {
           text-align: left;
         }
+        .volume {
+          flex-grow: 0.5;
+          padding-right: 20px;
+        }
         .icon-favorite {
           color: $color-sub-theme;
         }
@@ -432,14 +460,17 @@ function hideNormalPlayer() {
     }
     &.normal-enter-active,
     &.normal-leave-active {
-      transition: all 0.6s;
+      transition: all 1s;
       .top,
-      .bottom {
+      .bottom,
+      .cd-wrapper {
         transition: all 0.6s cubic-bezier(0.45, 0, 0.55, 1);
       }
     }
+    // from就是开始的初始值,to是离开是最终值
     &.normal-enter-from,
     &.normal-leave-to {
+      // 这里设置opacity为0,代表开始时是0和最终时是0
       opacity: 0;
       .top {
         transform: translate3d(0, -100px, 0);
@@ -447,6 +478,9 @@ function hideNormalPlayer() {
       .bottom {
         transform: translate3d(0, 100px, 0);
       }
+      // .cd-wrapper {
+      //   transform: translate(-147.5px, 402px) scale(0.133);
+      // }
     }
   }
 }

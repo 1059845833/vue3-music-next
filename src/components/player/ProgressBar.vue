@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 const props = defineProps({
   // 进度,[0,1]
   progress: {
@@ -39,7 +39,7 @@ const btnStyle = computed(() => {
   return `transform: translateX(${offset.value}px)`;
 });
 function getBarWidth() {
-  return progressBar.value.clientWidth;
+  return progressBar.value.clientWidth - progressBtnWidth;
 }
 // 监听滚动条变化
 watch(
@@ -47,6 +47,9 @@ watch(
   (cur, pre) => {
     const barWidth = getBarWidth();
     offset.value = barWidth * cur;
+  },
+  {
+    // immediate: true,
   },
 );
 const touch = {};
@@ -82,7 +85,7 @@ function handleClick(event) {
   // 进度条总进度
   const { clientX } = event;
   const barLeft = progressBar.value.getBoundingClientRect().left;
-  const progressPercent = (clientX - barLeft) / (getBarWidth() + progressBtnWidth);
+  const progressPercent = (clientX - barLeft) / getBarWidth();
   emit('progress-changed', progressPercent);
 }
 </script>
