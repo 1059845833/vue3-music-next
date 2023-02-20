@@ -16,7 +16,7 @@
     "create-keyframe-animation": "^0.1.0",
     "pinyin": "^2.9.1",
     "vue": "^3.2.13",
-    "vue-router": "^4.0.3",
+    "vue-router": "^4.1.6",
     "vue3-lazy": "^1.0.0-alpha.1",
     "vuex": "^4.0.0"
   },

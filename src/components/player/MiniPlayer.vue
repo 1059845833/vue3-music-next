@@ -19,8 +19,13 @@
         </div>
       </div>
       <div class="control">
-        <progress-circle :radius="32" :progress="progress">
+        <!-- <template #default="{ percentage }"> -->
+        <!-- <span>{{ percentage }} %</span> -->
+        <!-- </template>r -->
+        <progress-circle :radius="32" :progress="progress" :max="1">
+          <!-- <template #default> -->
           <i class="icon-mini" :class="miniPlayIcon" @click.stop="togglePlay"></i>
+          <!-- </template> -->
         </progress-circle>
       </div>
     </div>

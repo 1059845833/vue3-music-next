@@ -5,6 +5,7 @@ export default function useShortcut(props, groupRef) {
   const TOP_PADDING = 20;
   // scrollWrapper组件的实例
   const scrollRef = ref(null);
+  console.log(scrollRef);
   // 存储两次滚动的间隔以及计算currentIndex
   const touch = {};
 

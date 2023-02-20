@@ -13,7 +13,6 @@ export default function useAnimation() {
     },
   };
   function onEnter(el, done) {
-    console.log('enter');
     animations.registerAnimation({
       name: 'move',
       animation,

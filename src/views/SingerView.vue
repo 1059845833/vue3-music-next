@@ -21,6 +21,7 @@ const singerList = ref([]);
 watchEffect(async () => {
   const { singers } = await getSingerList();
   singerList.value = singers;
+  console.log(singers);
 });
 const singerData = ref(null);
 const router = useRouter();

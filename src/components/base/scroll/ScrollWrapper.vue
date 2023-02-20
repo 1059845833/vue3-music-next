@@ -3,9 +3,17 @@
     <slot></slot>
   </div>
 </template>
+<script>
+export default {
+  mounted() {
+    console.log('this', this.$parent);
+  },
+};
+</script>
 <script setup>
 import useScroll from './use-scroll';
 import { ref } from 'vue';
+console.log();
 const props = defineProps({
   click: {
     type: Boolean,
